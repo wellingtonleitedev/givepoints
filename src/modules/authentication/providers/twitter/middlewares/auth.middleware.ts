@@ -7,17 +7,13 @@ let session = {
   codeVerifier: "",
 };
 
-export default async function (
-  request: Request,
-  _: Response,
-  next: NextFunction
-) {
+const auth = (request: Request, _: Response, next: NextFunction) => {
   if (session.state && session.codeVerifier) {
     request.session = session;
     next();
   }
 
-  const { url, state, codeVerifier } = await client.generateOAuth2AuthLink(
+  const { url, state, codeVerifier } = client.generateOAuth2AuthLink(
     process.env.TWITTER_CALLBACK_URL!,
     { scope: ["tweet.read", "users.read", "offline.access"] }
   );
@@ -31,4 +27,6 @@ export default async function (
   request.session = session;
 
   next();
-}
+};
+
+export default auth;
