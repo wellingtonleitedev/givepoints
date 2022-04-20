@@ -31,5 +31,10 @@ export const create = async (request: Request, response: Response) => {
     },
   });
 
+  Object.assign(user, {
+    twitterLogged: !!request.user?.twitterToken,
+    twitchLogged: !!request.user?.twitchToken,
+  });
+
   response.json({ user, token });
 };
