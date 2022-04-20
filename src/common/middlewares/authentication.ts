@@ -21,6 +21,15 @@ export const ensureAuthentication = (
     throw new Error("JWT Token is missing");
   } else {
     handleAuth(authHeader);
+    const decode = handleAuth(authHeader);
+
+    const { sub, twitterToken, twitchToken } = decode as TokenPayload;
+
+    request.user = {
+      id: sub,
+      twitterToken,
+      twitchToken,
+    };
     next();
   }
 };

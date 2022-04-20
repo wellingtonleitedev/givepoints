@@ -20,7 +20,7 @@ twitchRoutes.get("/twitch", (_, response) => {
     },
   });
 
-  response.json(authUrl);
+  response.json({ url: authUrl });
 });
 twitchRoutes.get("/callback/twitch", authentication, create);
 
