@@ -2,6 +2,7 @@ import cache from "../../../../../config/cache.config";
 import client from "../../../../../config/twitter.config";
 import { Request, Response } from "express";
 import createSessionService from "../../common/services/createSession.service";
+import AppError from "../../../../../common/errors/appError";
 
 export const create = async (request: Request, response: Response) => {
   const { url, state, codeVerifier } = client.generateOAuth2AuthLink(
@@ -27,11 +28,11 @@ export const show = async (request: Request, response: Response) => {
     : null;
 
   if (!codeVerifier || !state || !sessionState || !code) {
-    throw new Error("You denied the app or your session expired!");
+    throw new AppError("You denied the app or your session expired!", 401);
   }
 
   if (state !== sessionState) {
-    throw new Error("Stored tokens didnt match!");
+    throw new AppError("Stored tokens didnt match!", 401);
   }
 
   try {
@@ -39,7 +40,6 @@ export const show = async (request: Request, response: Response) => {
       client: loggedClient,
       accessToken,
       refreshToken,
-      expiresIn,
     } = await client.loginWithOAuth2({
       code,
       codeVerifier,
@@ -48,24 +48,28 @@ export const show = async (request: Request, response: Response) => {
 
     const { data: twitterUser } = await loggedClient.v2.me();
 
+    cache.set(
+      `@twitter:token:${twitterUser.id}`,
+      JSON.stringify({ accessToken, refreshToken })
+    );
+
     const { user, token } = await createSessionService({
       userId: request.user?.id,
       data: {
+        name: twitterUser.name,
         twitterId: twitterUser.id,
         twitterUsername: twitterUser.username,
-        name: twitterUser.name,
-        twitterToken: accessToken,
-        twitchToken: request.user?.twitchToken,
+        twitchId: request.user?.twitchId,
       },
     });
 
     Object.assign(user, {
-      twitterLogged: !!request.user?.twitterToken,
-      twitchLogged: !!request.user?.twitchToken,
+      twitterLogged: !!twitterUser.id,
+      twitchLogged: !!request.user?.twitchId,
     });
 
     return response.json({ user, token });
   } catch (error) {
-    throw new Error("Invalid verifier or access tokens!");
+    throw new AppError("Invalid verifier or access tokens!", 401);
   }
 };

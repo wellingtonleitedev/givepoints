@@ -2,6 +2,7 @@ import "dotenv/config";
 import axios from "axios";
 import { Request, Response } from "express";
 import createSessionService from "../../common/services/createSession.service";
+import cache from "../../../../../config/cache.config";
 
 export const create = async (request: Request, response: Response) => {
   const { data } = await axios.post("https://id.twitch.tv/oauth2/token", {
@@ -21,19 +22,20 @@ export const create = async (request: Request, response: Response) => {
     }
   );
 
+  cache.set(`@twitch:token:${twitchUser.user_id}`, data.access_token);
+
   const { user, token } = await createSessionService({
     userId: request.user?.id,
     data: {
       twitchId: twitchUser.user_id,
       twitchUsername: twitchUser.login,
-      twitchToken: data.access_token,
-      twitterToken: request.user?.twitterToken,
+      twitterId: request.user?.twitterId,
     },
   });
 
   Object.assign(user, {
-    twitterLogged: !!request.user?.twitterToken,
-    twitchLogged: !!request.user?.twitchToken,
+    twitterLogged: !!request.user?.twitterId,
+    twitchLogged: !!twitchUser.user_id,
   });
 
   response.json({ user, token });

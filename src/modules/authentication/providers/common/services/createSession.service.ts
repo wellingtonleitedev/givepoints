@@ -1,5 +1,6 @@
 import { PrismaClient, User } from "@prisma/client";
 import authConfig from "../../../../../config/auth.config";
+import cache from "../../../../../config/cache.config";
 import { sign } from "jsonwebtoken";
 
 interface IRequest {
@@ -9,16 +10,18 @@ interface IRequest {
 
 interface IUser {
   name?: string;
-  twitterId?: string;
-  twitterToken?: string;
+  twitterId: string;
   twitterUsername?: string;
-  twitchId?: string;
-  twitchToken?: string;
+  twitchId: string;
   twitchUsername?: string;
 }
 
-const createSessionService = async ({ data, userId }: IRequest) => {
+const createSessionService = async ({ userId, data }: IRequest) => {
   let user: User | null;
+
+  const twitchUser = JSON.parse(
+    (await cache.get(`@twitch:user:${data.twitchId}`)) ?? "{}"
+  );
 
   const prisma = new PrismaClient();
   user = await prisma.user.findFirst({
@@ -28,7 +31,7 @@ const createSessionService = async ({ data, userId }: IRequest) => {
           id: userId,
         },
         {
-          twitchId: data.twitchId,
+          twitchId: twitchUser?.user_id,
         },
         {
           twitterId: data.twitterId,
@@ -40,11 +43,9 @@ const createSessionService = async ({ data, userId }: IRequest) => {
   if (!user) {
     user = await prisma.user.create({
       data: {
-        name: data.name,
+        name: data.twitterUsername,
         twitterId: data.twitterId,
-        twitterUsername: data.twitchUsername,
-        twitchId: data.twitchId,
-        twitchUsername: data.twitchUsername,
+        twitterUsername: data.twitterUsername,
       },
     });
   } else {
@@ -52,9 +53,9 @@ const createSessionService = async ({ data, userId }: IRequest) => {
       data: {
         name: user.name ?? data.name,
         twitterId: user.twitterId ?? data.twitterId,
-        twitterUsername: user.twitterUsername ?? data.twitchUsername,
-        twitchId: user.twitchId ?? data.twitchId,
-        twitchUsername: user.twitchUsername ?? data.twitchUsername,
+        twitterUsername: user.twitterUsername ?? data.twitterUsername,
+        twitchId: user.twitchId ?? twitchUser.user_id,
+        twitchUsername: user.twitchUsername ?? twitchUser.login,
       },
       where: {
         id: user.id,
@@ -64,8 +65,8 @@ const createSessionService = async ({ data, userId }: IRequest) => {
 
   const token = sign(
     {
-      twitterToken: data.twitterToken,
-      twitchToken: data.twitchToken,
+      twitterId: data.twitterId,
+      twitchId: twitchUser.twitchId,
     },
     authConfig.jwt.secret,
     {
