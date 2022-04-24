@@ -5,16 +5,17 @@
     "rootDir": "./src",
     "baseUrl": "./src",
     "paths": {
-      "@modules/*": ["./src/modules/*"],
-      "@config/*": ["./src/config/*"]
+      "@modules/*": ["modules/*"],
+      "@config/*": ["config/*"],
+      "@common/*": ["common/*"]
     },
     "allowJs": true,
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
-  },
-  "include": ["./src"],
-  "exclude": ["node_modules", "dist"]
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
 }
