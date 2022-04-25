@@ -20,7 +20,7 @@ export const create = async (request: Request, response: Response) => {
     }
 
     const prisma = new PrismaClient();
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         twitterId: { in: twitterUsers.map((item) => item.id) },
       },
@@ -48,8 +48,8 @@ export const create = async (request: Request, response: Response) => {
       );
 
       usersWithPoints.push({
+        ...user,
         ...data,
-        ...twitterUsers.find((ts) => ts.id === user.twitterId),
       });
     }
 

@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Users {
   id              String   @id @default(uuid())
   createdAt       DateTime @default(now())
   name            String?
@@ -16,6 +16,8 @@ model User {
   twitchId        String?
   twitchUsername  String?
   role            Role     @default(USER)
+
+  @@map("users")
 }
 
 enum Role {

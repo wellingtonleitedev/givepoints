@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, Users } from "@prisma/client";
 import authConfig from "../../../../../config/auth.config";
 import cache from "../../../../../config/cache.config";
 import { sign } from "jsonwebtoken";
@@ -17,21 +17,17 @@ interface IUser {
 }
 
 const createSessionService = async ({ userId, data }: IRequest) => {
-  let user: User | null;
-
-  const twitchUser = JSON.parse(
-    (await cache.get(`@twitch:user:${data.twitchId}`)) ?? "{}"
-  );
+  let user: Users | null;
 
   const prisma = new PrismaClient();
-  user = await prisma.user.findFirst({
+  user = await prisma.users.findFirst({
     where: {
       OR: [
         {
           id: userId,
         },
         {
-          twitchId: twitchUser?.user_id,
+          twitchId: data.twitchId,
         },
         {
           twitterId: data.twitterId,
@@ -41,21 +37,23 @@ const createSessionService = async ({ userId, data }: IRequest) => {
   });
 
   if (!user) {
-    user = await prisma.user.create({
+    user = await prisma.users.create({
       data: {
         name: data.twitterUsername,
         twitterId: data.twitterId,
         twitterUsername: data.twitterUsername,
+        twitchId: data.twitchId,
+        twitchUsername: data.twitchUsername,
       },
     });
   } else {
-    user = await prisma.user.update({
+    user = await prisma.users.update({
       data: {
         name: user.name ?? data.name,
         twitterId: user.twitterId ?? data.twitterId,
         twitterUsername: user.twitterUsername ?? data.twitterUsername,
-        twitchId: user.twitchId ?? twitchUser.user_id,
-        twitchUsername: user.twitchUsername ?? twitchUser.login,
+        twitchId: user.twitchId ?? data.twitchId,
+        twitchUsername: user.twitchUsername ?? data.twitchUsername,
       },
       where: {
         id: user.id,
@@ -66,7 +64,7 @@ const createSessionService = async ({ userId, data }: IRequest) => {
   const token = sign(
     {
       twitterId: data.twitterId,
-      twitchId: twitchUser.twitchId,
+      twitchId: data.twitchId,
     },
     authConfig.jwt.secret,
     {
