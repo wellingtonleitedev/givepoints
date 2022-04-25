@@ -17,7 +17,29 @@ model Users {
   twitchUsername  String?
   role            Role     @default(USER)
 
+  GiveawaysUsers GiveawaysUsers[]
   @@map("users")
+}
+
+model Giveaways {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  tweetId   String
+
+  GiveawaysUsers GiveawaysUsers[]
+  @@map("giveaways")
+}
+
+model GiveawaysUsers {
+  id             String    @id @default(uuid())
+  fk_id_giveaway String
+  fk_id_user     String
+  users          Users     @relation(fields: [fk_id_user], references: [id])
+  giveaways      Giveaways @relation(fields: [fk_id_giveaway], references: [id])
+  distributed    Boolean
+  createdAt      DateTime  @default(now())
+
+  @@map("giveaways_users")
 }
 
 enum Role {

@@ -35,6 +35,12 @@ export const create = async (request: Request, response: Response) => {
       }
     );
 
+    const giveaway = await prisma.giveaways.create({
+      data: {
+        tweetId,
+      },
+    });
+
     const usersWithPoints = [];
     for (const user of users) {
       const { data } = await axios.put(
@@ -52,6 +58,14 @@ export const create = async (request: Request, response: Response) => {
         ...data,
       });
     }
+
+    await prisma.giveawaysUsers.createMany({
+      data: usersWithPoints.map((user) => ({
+        fk_id_giveaway: giveaway.id,
+        fk_id_user: user.id,
+        distributed: true,
+      })),
+    });
 
     return response.json({ users: usersWithPoints });
   } catch (error) {
