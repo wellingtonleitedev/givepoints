@@ -16,7 +16,7 @@ export const ensureAuthentication = (
   _: Response,
   next: NextFunction
 ) => {
-  const authHeader = request.headers.authorization;
+  const { authorization: authHeader } = request.headers;
 
   if (!authHeader) {
     throw new AppError("JWT Token is missing", 401);
@@ -30,7 +30,7 @@ export const authentication = (
   _: Response,
   next: NextFunction
 ) => {
-  const authHeader = request.headers.authorization;
+  const { authorization: authHeader, streamelements_token } = request.headers;
 
   if (authHeader) {
     try {
@@ -44,6 +44,7 @@ export const authentication = (
         id: sub,
         twitterId,
         twitchId,
+        streamerToken: streamelements_token as string,
       };
     } catch {
       throw new AppError("Invalid JWT Token", 401);

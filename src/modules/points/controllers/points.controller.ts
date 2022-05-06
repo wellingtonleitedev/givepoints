@@ -8,6 +8,17 @@ import AppError from "../../../common/errors/appError";
 
 export const create = async (request: Request, response: Response) => {
   const { tweetId, amount } = request.body;
+  const { streamerToken } = request.user;
+
+  if (!tweetId || !amount)
+    throw new AppError(
+      "you need to provider a tweet id and an amount of points"
+    );
+
+  if (!streamerToken)
+    throw new AppError(
+      "You need to set your StreamElements Token for your profile"
+    );
 
   try {
     const twitterUsers = await getRetweetedUsers(
@@ -30,7 +41,7 @@ export const create = async (request: Request, response: Response) => {
       `${process.env.STREAMELEMENTS_URL}channels/me`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.STREAMELEMENTS_BEARER_TOKEN}`,
+          Authorization: `Bearer ${request.user.streamerToken}`,
         },
       }
     );
@@ -42,7 +53,7 @@ export const create = async (request: Request, response: Response) => {
         {},
         {
           headers: {
-            Authorization: `Bearer ${process.env.STREAMELEMENTS_BEARER_TOKEN}`,
+            Authorization: `Bearer ${request.user.streamerToken}`,
           },
         }
       );

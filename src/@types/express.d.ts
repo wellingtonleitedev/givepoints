@@ -4,6 +4,7 @@ declare namespace Express {
       id: string;
       twitterId: string;
       twitchId: string;
+      streamerToken?: string;
     };
   }
 }

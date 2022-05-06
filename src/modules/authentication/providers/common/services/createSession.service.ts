@@ -39,7 +39,7 @@ const createSessionService = async ({ userId, data }: IRequest) => {
   if (!user) {
     user = await prisma.users.create({
       data: {
-        name: data.twitterUsername,
+        name: data.name,
         twitterId: data.twitterId,
         twitterUsername: data.twitterUsername,
         twitchId: data.twitchId,
